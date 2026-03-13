@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+@layer base {
+  body {
+    @apply bg-background-dark text-slate-100 font-sans antialiased;
+    background-image: radial-gradient(circle at 50% 0%, #1a2a3a 0%, #0a0f14 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+  
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    line-height: 1;
+  }
+}
+
+/* Custom animations for the circular progress */
+@keyframes progress-load {
+  from { stroke-dashoffset: 251.2; }
+  to { stroke-dashoffset: var(--offset); }
+}
