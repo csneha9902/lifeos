@@ -250,9 +250,9 @@ export const LedgerView = ({ data }) => {
                     className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="py-4 pr-4 text-sm font-black text-slate-600">{i + 1}</td>
-                    <td className="py-4 text-sm font-bold text-white">{m.merchant}</td>
-                    <td className="py-4 text-right text-sm font-black text-amber-400">₹{m.total?.toLocaleString()}</td>
-                    <td className="py-4 text-right text-sm font-bold text-slate-400">{m.count}</td>
+                    <td className="py-4 text-sm font-bold text-white">{m.name}</td>
+                    <td className="py-4 text-right text-sm font-black text-amber-400">₹{m.amount?.toLocaleString()}</td>
+                    <td className="py-4 text-right text-sm font-bold text-slate-400">{m.count} transactions</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -260,6 +260,17 @@ export const LedgerView = ({ data }) => {
           </div>
         </div>
       )}
+
+      {/* Re-analyze Section */}
+      <div className="flex justify-center pt-8 border-t border-white/5">
+        <button
+          onClick={() => window.location.href = '/upload'}
+          className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm transition-all shadow-lg shadow-blue-600/20"
+        >
+          Analyze Another Statement
+        </button>
+      </div>
+
     </motion.div>
   );
 };

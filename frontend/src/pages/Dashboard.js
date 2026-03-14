@@ -78,6 +78,22 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { analysisData, quizArchetype } = useAnalysis();
   const [currentView, setCurrentView] = useState('hero');
+  const [completedQuests, setCompletedQuests] = useState(
+    () => JSON.parse(localStorage.getItem('completedQuests') || '[]')
+  );
+  const [bonusXP, setBonusXP] = useState(
+    () => parseInt(localStorage.getItem('bonusXP') || '0')
+  );
+
+  const completeQuest = (questTitle, xp) => {
+    if (completedQuests.includes(questTitle)) return;
+    const updated = [...completedQuests, questTitle];
+    const newBonus = bonusXP + xp;
+    setCompletedQuests(updated);
+    setBonusXP(newBonus);
+    localStorage.setItem('completedQuests', JSON.stringify(updated));
+    localStorage.setItem('bonusXP', String(newBonus));
+  };
 
   // If no data, redirect to upload
   if (!analysisData) {
@@ -165,9 +181,9 @@ export default function Dashboard() {
                   <span className="text-2xl">🎯</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-emerald-400 mb-1">Your instincts are sharp.</h3>
+                  <h3 className="text-lg font-black text-emerald-400 mb-1">Your instinct was right.</h3>
                   <p className="text-sm text-slate-300 font-medium">
-                    You predicted <span className="font-black text-white">{quizArchetype}</span> — and your bank confirms it. The data doesn't lie, and neither did your gut.
+                    You are a <span className="font-black text-white">{d.archetype}</span>
                   </p>
                 </div>
               </div>
@@ -177,9 +193,9 @@ export default function Dashboard() {
                   <span className="text-2xl">🔄</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-amber-400 mb-1">Interesting. The data tells a different story.</h3>
+                  <h3 className="text-lg font-black text-amber-400 mb-1">Interesting.</h3>
                   <p className="text-sm text-slate-300 font-medium">
-                    You thought you were <span className="font-black text-white">{quizArchetype}</span>, but your bank says you're <span className="font-black text-white">{d.archetype}</span>. The data doesn't lie.
+                    You thought you were <span className="font-black text-white">{quizArchetype}</span> but your bank says <span className="font-black text-white">{d.archetype}</span>. The data doesn't lie.
                   </p>
                 </div>
               </div>
@@ -188,7 +204,7 @@ export default function Dashboard() {
         )}
 
         <AnimatePresence mode="wait">
-          {currentView === 'hero' && <HeroOverview key="hero" d={d} quizArchetype={quizArchetype} />}
+          {currentView === 'hero' && <HeroOverview key="hero" d={d} quizArchetype={quizArchetype} completedQuests={completedQuests} bonusXP={bonusXP} completeQuest={completeQuest} />}
           {currentView === 'ledger' && <LedgerView key="ledger" data={d} />}
           {currentView === 'xp' && <XPView key="xp" data={d} />}
         </AnimatePresence>
@@ -200,7 +216,7 @@ export default function Dashboard() {
 /* ═══════════════════════════════════════════════════════
    HERO OVERVIEW
    ═══════════════════════════════════════════════════════ */
-function HeroOverview({ d, quizArchetype }) {
+function HeroOverview({ d, quizArchetype, completedQuests, bonusXP, completeQuest }) {
   // Pick avatar config: backend archetype > quiz archetype > default
   const avatarKey = d.archetype || quizArchetype || 'High Achiever Burnout Risk';
   const avatarConfig = avatarMap[avatarKey] || avatarMap['high_achiever'] || Object.values(avatarMap)[0];
@@ -249,7 +265,7 @@ function HeroOverview({ d, quizArchetype }) {
         <div className="flex flex-col md:flex-row md:items-center gap-6 justify-between mb-6">
           <div>
             <h2 className="text-xl font-black text-white">{d.rpg?.title || 'Adventurer'}</h2>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Level {d.rpg?.level} • {d.rpg?.xp?.toLocaleString()} XP</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Level {d.rpg?.level} • {(d.rpg?.xp + bonusXP)?.toLocaleString()} XP</p>
           </div>
           <div className="px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-black text-blue-400">
             {d.rpg?.progress_percent || 0}% to next level
@@ -422,29 +438,51 @@ function HeroOverview({ d, quizArchetype }) {
           Active Quests
         </h3>
         <div className="space-y-4">
-          {d.quests?.map((quest, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="p-5 rounded-xl bg-[#1e2638]/50 border border-white/5 flex flex-col md:flex-row md:items-center gap-4"
-            >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                <Swords className="size-5 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-black text-white">{quest.title}</h4>
-                <p className="text-xs text-slate-400 mt-1">{quest.description}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${DIFF_COLORS[quest.difficulty] || DIFF_COLORS.Medium}`}>
-                  {quest.difficulty}
-                </span>
-                <span className="text-xs font-black text-emerald-400">+{quest.xp} XP</span>
-              </div>
-            </motion.div>
-          ))}
+          {d.quests?.map((quest, i) => {
+            const isDone = completedQuests.includes(quest.title);
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className={`p-5 rounded-xl border flex flex-col md:flex-row md:items-center gap-4 ${
+                  isDone 
+                    ? 'bg-emerald-500/10 border-emerald-500/20' 
+                    : 'bg-[#1e2638]/50 border-white/5'
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                  isDone ? 'bg-emerald-500/20' : 'bg-blue-500/10'
+                }`}>
+                  {isDone 
+                    ? <span className="text-2xl">✅</span>
+                    : <Swords className="size-5 text-blue-400" />
+                  }
+                </div>
+                <div className="flex-1">
+                  <h4 className={`text-sm font-black ${isDone ? 'text-emerald-400 line-through' : 'text-white'}`}>
+                    {quest.title}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">{quest.description}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${DIFF_COLORS[quest.difficulty] || DIFF_COLORS.Medium}`}>
+                    {quest.difficulty}
+                  </span>
+                  <span className="text-xs font-black text-emerald-400">+{quest.xp} XP</span>
+                  {!isDone && (
+                    <button
+                      onClick={() => completeQuest(quest.title, quest.xp)}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition-all shadow-lg shadow-blue-600/20"
+                    >
+                      Complete
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Boss Quest */}
