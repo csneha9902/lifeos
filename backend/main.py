@@ -1292,3 +1292,4 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
         total_transactions=len(df_txn),
         categories_breakdown={k: int(v) for k, v in counts.items()},
     )
+    
